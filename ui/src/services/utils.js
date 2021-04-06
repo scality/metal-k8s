@@ -406,18 +406,19 @@ export const useTableSortURLSync = (sorted, desc, data) => {
 
 /*
  ** Custom hook to define chart dimension based on their container
- ** This calculates the width for rows of 2 charts
- ** Takes container id as a param and returns [ width, heigth ]
+ ** By default this calculates the width for 3 rows of 2 charts
+ ** Takes container id as a param and optionnally desired number of columns and row and returns [ width, heigth ]
  */
-export const useDynamicChartSize = (container_id) => {
+export const useDynamicChartSize = (container_id, columns = 2, rows = 3) => {
   const graphsContainerWidth = document.getElementById(container_id)
     ?.offsetWidth;
   const [graphWidth, setGraphWidth] = useState(0);
   useEffect(() => {
-    if (graphsContainerWidth) setGraphWidth(graphsContainerWidth / 2 - 50);
-  }, [graphsContainerWidth]);
+    if (graphsContainerWidth)
+      setGraphWidth(graphsContainerWidth / columns - 50);
+  }, [graphsContainerWidth, columns]);
 
-  return [graphWidth, window.innerHeight / 6 - 50];
+  return [graphWidth, window.innerHeight / (rows * 2) - 40];
 };
 
 /*
