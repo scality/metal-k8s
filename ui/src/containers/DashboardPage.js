@@ -1,6 +1,8 @@
 //@flow
 import React from 'react';
 import styled from 'styled-components';
+import DashboardMetrics from '../components/DashboardMetrics';
+import { padding } from '@scality/core-ui/dist/style/theme';
 
 const DashboardGrid = styled.div`
   display: grid;
@@ -26,6 +28,10 @@ const DashboardGrid = styled.div`
   div {
     background-color: ${(props) => props.theme.brand.primary};
     color: ${(props) => props.theme.brand.textPrimary};
+    padding: ${padding.smaller};
+    .sc-vegachart svg {
+      background-color: inherit !important;
+    }
   }
   .health {
     grid-area: health;
@@ -44,6 +50,11 @@ const DashboardGrid = styled.div`
   }
   .metrics {
     grid-area: metrics;
+
+    // Needed to avoid dynamically sized charts to expand infinitely on refresh
+    // more info here: https://www.w3.org/TR/css3-grid-layout/#min-size-auto
+    min-width: 0;
+    min-height: 0;
   }
 `;
 
@@ -55,7 +66,9 @@ const DashboardPage = (props: {}) => {
       <div className="alerts">Alerts</div>
       <div className="services">Services</div>
       <div className="network">Network</div>
-      <div className="metrics">Metrics</div>
+      <div className="metrics">
+        <DashboardMetrics></DashboardMetrics>
+      </div>
     </DashboardGrid>
   );
 };
