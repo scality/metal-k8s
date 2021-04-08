@@ -1,6 +1,7 @@
 import React, { useCallback } from 'react';
+import styled from 'styled-components';
 import { useQuery } from 'react-query';
-import { LineChart, Loader } from '@scality/core-ui';
+import { LineChart, Loader as CoreUILoader } from '@scality/core-ui';
 import { lighten, darken } from 'polished';
 
 import { refreshNodesAction, stopRefreshNodesAction } from '../ducks/app/nodes';
@@ -19,9 +20,27 @@ import {
 } from '../components/LinechartSpec';
 import {
   GraphTitle,
-  GraphWrapper,
+  GraphWrapper as GraphWrapperCommon,
 } from '../components/style/CommonLayoutStyle';
 import { useDynamicChartSize } from '../services/utils';
+import { zIndex } from '@scality/core-ui/dist/style/theme';
+
+const GraphWrapper = styled(GraphWrapperCommon)`
+  position: relative;
+  min-height: 200px;
+
+  .sc-loader {
+    background: none;
+  }
+`;
+
+const Loader = styled(CoreUILoader)`
+  background: none !important;
+  position: absolute;
+  ${(props) => `top: ${props.topPosition || '0'}px;`}
+  left: 30px;
+  z-index: ${zIndex.overlay};
+`;
 
 // import styled from 'styled-components';
 
@@ -160,72 +179,81 @@ const DashboardMetrics = () => {
     ),
   );
 
+  // we use this to display empty chart since passing [] makes vega-lite crash
+  const noData = [
+    {
+      date: 0,
+      type: '',
+      y: 0,
+    },
+  ];
+
   return (
     <div id="dashboard-metrics-container">
-      <GraphWrapper className="cpuusage">
+      <GraphWrapper>
         <GraphTitle>
           <div>CPU Usage (%)</div>
-          {cpuDataQuery.isLoading && <Loader />}
         </GraphTitle>
-        {!cpuDataQuery.isLoading && cpuDataQuery.isSuccess ? (
-          <LineChart
-            id={'dashboard_cpu_id'}
-            data={cpuDataQuery.data}
-            xAxis={xAxis}
-            yAxis={yAxisUsage}
-            color={perNodeColor}
-            width={graphWidth}
-            height={graphHeight}
-            lineConfig={lineConfig}
-            tooltip={true}
-            tooltipConfig={perNodeTooltip}
-            tooltipTheme={'dark'}
-          />
-        ) : null}
+        {cpuDataQuery.isLoading && !cpuDataQuery.isSuccess && (
+          <Loader size="massive" topPosition={graphHeight - 10} />
+        )}
+        <LineChart
+          id={'dashboard_cpu_id'}
+          data={cpuDataQuery.isSuccess ? cpuDataQuery.data : noData}
+          xAxis={xAxis}
+          yAxis={yAxisUsage}
+          color={cpuDataQuery.isSuccess ? perNodeColor : null}
+          width={graphWidth}
+          height={graphHeight}
+          lineConfig={lineConfig}
+          tooltip={true}
+          tooltipConfig={perNodeTooltip}
+          tooltipTheme={'dark'}
+        />
       </GraphWrapper>
-      <GraphWrapper className="cpuusage">
+
+      <GraphWrapper>
         <GraphTitle>
           <div>Memory</div>
-          {cpuDataQuery.isLoading && <Loader />}
         </GraphTitle>
-
-        {!memoryDataQuery.isLoading && memoryDataQuery.isSuccess ? (
-          <LineChart
-            id={'dashboard_memory_id'}
-            data={memoryDataQuery.data}
-            xAxis={xAxis}
-            yAxis={yAxisUsage}
-            color={perNodeColor}
-            width={graphWidth}
-            height={graphHeight}
-            lineConfig={lineConfig}
-            tooltip={true}
-            tooltipConfig={perNodeTooltip}
-            tooltipTheme={'dark'}
-          />
-        ) : null}
+        {memoryDataQuery.isLoading && (
+          <Loader size="massive" topPosition={graphHeight - 10} />
+        )}
+        <LineChart
+          id={'dashboard_memory_id'}
+          data={memoryDataQuery.isSuccess ? memoryDataQuery.data : noData}
+          xAxis={xAxis}
+          yAxis={yAxisUsage}
+          color={memoryDataQuery.isSuccess ? perNodeColor : null}
+          width={graphWidth}
+          height={graphHeight}
+          lineConfig={lineConfig}
+          tooltip={true}
+          tooltipConfig={perNodeTooltip}
+          tooltipTheme={'dark'}
+        />
       </GraphWrapper>
-      <GraphWrapper className="cpuusage">
+      <GraphWrapper>
         <GraphTitle>
           <div>System Load</div>
-          {cpuDataQuery.isLoading && <Loader />}
         </GraphTitle>
+        {loadDataQuery.isLoading && (
+          <Loader size="massive" topPosition={graphHeight - 10} />
+        )}
 
-        {!loadDataQuery.isLoading && loadDataQuery.isSuccess ? (
-          <LineChart
-            id={'dashboard_load_id'}
-            data={loadDataQuery.data}
-            xAxis={xAxis}
-            yAxis={yAxis}
-            color={perNodeColor}
-            width={graphWidth}
-            height={graphHeight}
-            lineConfig={lineConfig}
-            tooltip={true}
-            tooltipConfig={perNodeTooltip}
-            tooltipTheme={'dark'}
-          />
-        ) : null}
+        <LineChart
+          id={'dashboard_load_id'}
+          data={loadDataQuery.isSuccess ? loadDataQuery.data : noData}
+          xAxis={xAxis}
+          yAxis={yAxis}
+          color={loadDataQuery.isSuccess ? perNodeColor : null}
+          width={graphWidth}
+          height={graphHeight}
+          lineConfig={lineConfig}
+          tooltip={true}
+          tooltipConfig={perNodeTooltip}
+          tooltipTheme={'dark'}
+        />
       </GraphWrapper>
     </div>
   );
