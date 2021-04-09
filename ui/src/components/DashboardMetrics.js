@@ -1,17 +1,26 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
+import { useHistory } from 'react-router';
 import styled from 'styled-components';
 import { useQuery } from 'react-query';
-import { LineChart, Loader as CoreUILoader } from '@scality/core-ui';
+import { LineChart, Loader as CoreUILoader, Dropdown } from '@scality/core-ui';
 import { lighten, darken } from 'polished';
 
-import { fromUnixTimestampToDate } from '../services/utils';
+import {
+  fromUnixTimestampToDate,
+  useQuery as useURLQuery,
+} from '../services/utils';
 import { useTypedSelector, useNodes } from '../hooks';
 import {
   queryNodeCPUMetrics,
   queryNodeMemoryMetrics,
   queryNodeLoadMetrics,
 } from '../services/prometheus/fetchMetrics';
-import { LAST_TWENTY_FOUR_HOURS, LAST_ONE_HOUR } from '../constants';
+import {
+  LAST_SEVEN_DAYS,
+  LAST_TWENTY_FOUR_HOURS,
+  LAST_ONE_HOUR,
+  queryTimeSpansCodes,
+} from '../constants';
 import {
   yAxisUsage,
   yAxis,
@@ -45,15 +54,19 @@ const Loader = styled(CoreUILoader)`
 
 const DashboardMetrics = () => {
   const theme = useTypedSelector((state) => state.config.theme);
+  const nodes = useNodes();
+  const history = useHistory();
+  const query = useURLQuery();
+
+  const [metricsTimeSpan, setMetricsTimeSpan] = useState(
+    LAST_TWENTY_FOUR_HOURS,
+  );
   // Get dynamic chart size for 1 column, 4 rows
   const [graphWidth, graphHeight] = useDynamicChartSize(
     'dashboard-metrics-container',
     1,
     4,
   );
-  const nodes = useNodes();
-
-  const metricsTimeSpan = LAST_TWENTY_FOUR_HOURS;
 
   // We use 4 main color from the palette and decline them (lighter/ darker) when we have more than 4 datasets
   const colorRange = [
@@ -138,7 +151,7 @@ const DashboardMetrics = () => {
   // Passing nodes table as a react-queries identifier so if a node is added/removed the data are refreshed
   // Also it makes the data to auto-refresh based on the node refresh timeout that is already implemented
   const cpuDataQuery = useQuery(
-    ['dashboardMetricsCPU', nodes],
+    ['dashboardMetricsCPU', nodes, metricsTimeSpan],
     useCallback(
       () =>
         Promise.all(
@@ -151,7 +164,7 @@ const DashboardMetrics = () => {
   );
 
   const memoryDataQuery = useQuery(
-    ['dashboardMetricsMemory', nodes],
+    ['dashboardMetricsMemory', nodes, metricsTimeSpan],
     useCallback(
       () =>
         Promise.all(
@@ -164,7 +177,7 @@ const DashboardMetrics = () => {
   );
 
   const loadDataQuery = useQuery(
-    ['dashboardMetricsLoad', nodes],
+    ['dashboardMetricsLoad', nodes, metricsTimeSpan],
     useCallback(
       () =>
         Promise.all(
@@ -185,8 +198,55 @@ const DashboardMetrics = () => {
     },
   ];
 
+  useEffect(() => {
+    // Declaring query locally in useEffect to avoid double setting metricsTimeSpan on each query change
+    const query = new URLSearchParams(window.location.search);
+
+    if (query.get('from')) {
+      let formatted = queryTimeSpansCodes.find(
+        (item) => item.label === query.get('from'),
+      );
+      setMetricsTimeSpan(formatted.value);
+    }
+  }, []);
+
+  // Write the selected timespan in URL
+  const writeUrlTimeSpan = (timespan) => {
+    let formatted = queryTimeSpansCodes.find((item) => item.value === timespan);
+
+    if (formatted) {
+      query.set('from', formatted.label);
+      history.push({ search: query.toString() });
+    }
+  };
+
+  // Dropdown items
+  const metricsTimeSpanItems = [
+    LAST_SEVEN_DAYS,
+    LAST_TWENTY_FOUR_HOURS,
+    LAST_ONE_HOUR,
+  ].map((option) => ({
+    label: option,
+    'data-cy': option,
+    onClick: () => {
+      writeUrlTimeSpan(option);
+      setMetricsTimeSpan(option);
+    },
+    selected: metricsTimeSpan === option,
+  }));
+
+  const metricsTimeSpanDropdownItems = metricsTimeSpanItems.filter(
+    (mTS) => mTS.label !== metricsTimeSpan,
+  );
+
   return (
     <div id="dashboard-metrics-container">
+      <Dropdown
+        items={metricsTimeSpanDropdownItems}
+        text={metricsTimeSpan}
+        size="small"
+        data-cy="metrics_timespan_selection"
+      />
       <GraphWrapper>
         <GraphTitle>
           <div>CPU Usage (%)</div>
