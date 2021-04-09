@@ -4,9 +4,8 @@ import { useQuery } from 'react-query';
 import { LineChart, Loader as CoreUILoader } from '@scality/core-ui';
 import { lighten, darken } from 'polished';
 
-import { refreshNodesAction, stopRefreshNodesAction } from '../ducks/app/nodes';
-import { useRefreshEffect, fromUnixTimestampToDate } from '../services/utils';
-import { useTypedSelector } from '../hooks';
+import { fromUnixTimestampToDate } from '../services/utils';
+import { useTypedSelector, useNodes } from '../hooks';
 import {
   queryNodeCPUMetrics,
   queryNodeMemoryMetrics,
@@ -45,9 +44,6 @@ const Loader = styled(CoreUILoader)`
 // import styled from 'styled-components';
 
 const DashboardMetrics = () => {
-  // Making sure nodes list is loaded
-  useRefreshEffect(refreshNodesAction, stopRefreshNodesAction);
-  const nodes = useTypedSelector((state) => state.app.nodes.list);
   const theme = useTypedSelector((state) => state.config.theme);
   // Get dynamic chart size for 1 column, 4 rows
   const [graphWidth, graphHeight] = useDynamicChartSize(
@@ -55,6 +51,7 @@ const DashboardMetrics = () => {
     1,
     4,
   );
+  const nodes = useNodes();
 
   const metricsTimeSpan = LAST_TWENTY_FOUR_HOURS;
 
