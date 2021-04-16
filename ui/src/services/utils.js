@@ -415,7 +415,7 @@ export const useDynamicChartSize = (container_id, columns = 2, rows = 3) => {
   const [graphWidth, setGraphWidth] = useState(0);
   useEffect(() => {
     if (graphsContainerWidth)
-      setGraphWidth(graphsContainerWidth / columns - 50);
+      setGraphWidth(graphsContainerWidth / columns - 90);
   }, [graphsContainerWidth, columns]);
 
   return [graphWidth, window.innerHeight / (rows * 2) - 40];
