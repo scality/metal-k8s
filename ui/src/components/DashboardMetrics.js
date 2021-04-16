@@ -1,10 +1,12 @@
 import React, { useCallback, useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useQuery } from 'react-query';
-import { LineChart, Loader as CoreUILoader } from '@scality/core-ui';
+import { LineChart, Loader as CoreUILoader, Button } from '@scality/core-ui';
 import { lighten, darken } from 'polished';
+import { intl } from '../translations/IntlGlobalProvider';
 
 import { fromUnixTimestampToDate } from '../services/utils';
+import { fetchConfig } from '../services/api';
 import { useTypedSelector, useNodes } from '../hooks';
 import {
   queryNodeCPUMetrics,
@@ -226,6 +228,9 @@ const DashboardMetrics = () => {
     [nodes],
   );
 
+  // App config, used to generated Advanced metrics button link
+  const configQuery = useQuery('appConfig', fetchConfig);
+
   // Passing nodes table as a react-queries identifier so if a node is added/removed the data are refreshed
   // Also it makes the data to auto-refresh based on the node refresh timeout that is already implemented
   const cpuDataQuery = useQuery(
@@ -302,6 +307,19 @@ const DashboardMetrics = () => {
 
   return (
     <div id="dashboard-metrics-container">
+      {configQuery.isSuccess && configQuery.data.url_grafana && (
+        <Button
+          text={intl.translate('advanced_metrics')}
+          variant={'base'}
+          icon={<i className="fas fa-external-link-alt" />}
+          size={'small'}
+          href={`${configQuery.data.url_grafana}/dashboard/db/nodes-detailed`}
+          target="_blank"
+          rel="noopener noreferrer"
+          data-cy="advanced_metrics_node_detailed"
+        />
+      )}
+
       <GraphWrapper>
         <GraphTitle>
           <div>CPU Usage (%)</div>
