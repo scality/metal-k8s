@@ -1,14 +1,10 @@
 import React, { useCallback, useState, useEffect } from 'react';
-import { useHistory } from 'react-router';
 import styled from 'styled-components';
 import { useQuery } from 'react-query';
-import { LineChart, Loader as CoreUILoader, Dropdown } from '@scality/core-ui';
+import { LineChart, Loader as CoreUILoader } from '@scality/core-ui';
 import { lighten, darken } from 'polished';
 
-import {
-  fromUnixTimestampToDate,
-  useQuery as useURLQuery,
-} from '../services/utils';
+import { fromUnixTimestampToDate } from '../services/utils';
 import { useTypedSelector, useNodes } from '../hooks';
 import {
   queryNodeCPUMetrics,
@@ -18,7 +14,6 @@ import {
   queryThroughputWrite,
 } from '../services/prometheus/fetchMetrics';
 import {
-  LAST_SEVEN_DAYS,
   LAST_TWENTY_FOUR_HOURS,
   LAST_ONE_HOUR,
   queryTimeSpansCodes,
@@ -63,8 +58,6 @@ const Loader = styled(CoreUILoader)`
 const DashboardMetrics = () => {
   const theme = useTypedSelector((state) => state.config.theme);
   const nodes = useNodes();
-  const history = useHistory();
-  const query = useURLQuery();
 
   const [metricsTimeSpan, setMetricsTimeSpan] = useState(
     LAST_TWENTY_FOUR_HOURS,
@@ -307,43 +300,8 @@ const DashboardMetrics = () => {
     }
   }, []);
 
-  // Write the selected timespan in URL
-  const writeUrlTimeSpan = (timespan) => {
-    let formatted = queryTimeSpansCodes.find((item) => item.value === timespan);
-
-    if (formatted) {
-      query.set('from', formatted.label);
-      history.push({ search: query.toString() });
-    }
-  };
-
-  // Dropdown items
-  const metricsTimeSpanItems = [
-    LAST_SEVEN_DAYS,
-    LAST_TWENTY_FOUR_HOURS,
-    LAST_ONE_HOUR,
-  ].map((option) => ({
-    label: option,
-    'data-cy': option,
-    onClick: () => {
-      writeUrlTimeSpan(option);
-      setMetricsTimeSpan(option);
-    },
-    selected: metricsTimeSpan === option,
-  }));
-
-  const metricsTimeSpanDropdownItems = metricsTimeSpanItems.filter(
-    (mTS) => mTS.label !== metricsTimeSpan,
-  );
-
   return (
     <div id="dashboard-metrics-container">
-      <Dropdown
-        items={metricsTimeSpanDropdownItems}
-        text={metricsTimeSpan}
-        size="small"
-        data-cy="metrics_timespan_selection"
-      />
       <GraphWrapper>
         <GraphTitle>
           <div>CPU Usage (%)</div>
