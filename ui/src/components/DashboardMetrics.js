@@ -14,6 +14,8 @@ import {
   queryNodeCPUMetrics,
   queryNodeMemoryMetrics,
   queryNodeLoadMetrics,
+  queryThroughputRead,
+  queryThroughputWrite,
 } from '../services/prometheus/fetchMetrics';
 import {
   LAST_SEVEN_DAYS,
@@ -32,6 +34,12 @@ import {
 } from '../components/style/CommonLayoutStyle';
 import { useDynamicChartSize } from '../services/utils';
 import { zIndex } from '@scality/core-ui/dist/style/theme';
+import { expressionFunction } from 'vega';
+
+// Custom formatter to display negative value as absolut value in throughput chart
+expressionFunction('throughputFormatter', function (datum, params) {
+  return Math.abs(datum).toFixed(2);
+});
 
 const GraphWrapper = styled(GraphWrapperCommon)`
   position: relative;
@@ -116,6 +124,22 @@ const DashboardMetrics = () => {
     },
   };
 
+  const throughputColor = {
+    field: 'type',
+    type: 'nominal',
+    scale: {
+      range: colorRange,
+    },
+    legend: {
+      direction: 'horizontal',
+      orient: 'bottom',
+      title: null,
+      labelFontSize: 12,
+      symbolSize: 300,
+      columns: 2,
+    },
+  };
+
   const perNodeTooltip = getTooltipConfig(
     nodes.map((node) => ({
       field: node.name,
@@ -123,6 +147,27 @@ const DashboardMetrics = () => {
       title: node.name,
       format: '.2f',
     })),
+  );
+
+  const throughputTooltip = getTooltipConfig(
+    ((nodes) => {
+      let res = [];
+      nodes.forEach((element) => {
+        res.push({
+          field: `${element.name}-read`,
+          type: 'quantitative',
+          title: `${element.name}-read`,
+          formatType: 'throughputFormatter',
+        });
+        res.push({
+          field: `${element.name}-write`,
+          type: 'quantitative',
+          title: `${element.name}-write`,
+          format: '.2f',
+        });
+      });
+      return res;
+    })(nodes),
   );
 
   const lineConfig = { strokeWidth: 1.5 };
@@ -144,6 +189,46 @@ const DashboardMetrics = () => {
         return acc.concat(temp);
       }, []);
       return reduced;
+    },
+    [nodes],
+  );
+
+  const formatNodesThroughputPromRangeForChart = useCallback(
+    (result) => {
+      const readRes = result[0];
+      const writeRes = result[1];
+
+      if (readRes.status === 'success' && writeRes.status === 'success') {
+        const reduced = nodes.reduce((acc, node, index) => {
+          let tempRead = [];
+          let tempWrite = [];
+
+          const nodeReadData = readRes.data?.result?.find(
+            (item) => item.metric?.instance.split(':')[0] === node.internalIP,
+          );
+          const nodeWriteData = writeRes.data?.result?.find(
+            (item) => item.metric?.instance.split(':')[0] === node.internalIP,
+          );
+
+          if (nodeReadData)
+            tempRead = nodeReadData.values.map((item) => ({
+              date: fromUnixTimestampToDate(item[0]),
+              type: `${node.name}-read`,
+              y: 0 - item[1],
+            }));
+          if (nodeWriteData)
+            tempWrite = nodeWriteData.values.map((item) => ({
+              date: fromUnixTimestampToDate(item[0]),
+              type: `${node.name}-write`,
+              y: item[1],
+            }));
+
+          return acc.concat(tempRead).concat(tempWrite);
+        }, []);
+        return reduced;
+      }
+
+      return null;
     },
     [nodes],
   );
@@ -185,6 +270,18 @@ const DashboardMetrics = () => {
             queryNodeLoadMetrics(node.internalIP, metricsTimeSpan),
           ),
         ).then((result) => formatNodesPromRangeForChart(result)),
+      [nodes, metricsTimeSpan, formatNodesPromRangeForChart],
+    ),
+  );
+
+  const throughputQuery = useQuery(
+    ['throughputQuery', nodes, metricsTimeSpan],
+    useCallback(
+      () =>
+        Promise.all([
+          queryThroughputRead(metricsTimeSpan),
+          queryThroughputWrite(metricsTimeSpan),
+        ]).then((result) => formatNodesThroughputPromRangeForChart(result)),
       [nodes, metricsTimeSpan, formatNodesPromRangeForChart],
     ),
   );
@@ -268,7 +365,6 @@ const DashboardMetrics = () => {
           tooltipTheme={'dark'}
         />
       </GraphWrapper>
-
       <GraphWrapper>
         <GraphTitle>
           <div>Memory</div>
@@ -309,6 +405,28 @@ const DashboardMetrics = () => {
           lineConfig={lineConfig}
           tooltip={true}
           tooltipConfig={perNodeTooltip}
+          tooltipTheme={'dark'}
+        />
+      </GraphWrapper>
+      <GraphWrapper>
+        <GraphTitle>
+          <div>Throughput</div>
+        </GraphTitle>
+        {throughputQuery.isLoading && (
+          <Loader size="massive" topPosition={graphHeight - 10} />
+        )}
+
+        <LineChart
+          id={'dashboard_throughput_id'}
+          data={throughputQuery.isSuccess ? throughputQuery.data : noData}
+          xAxis={xAxis}
+          yAxis={yAxis}
+          color={throughputQuery.isSuccess ? throughputColor : null}
+          width={graphWidth}
+          height={graphHeight}
+          lineConfig={lineConfig}
+          tooltip={true}
+          tooltipConfig={throughputTooltip}
           tooltipTheme={'dark'}
         />
       </GraphWrapper>

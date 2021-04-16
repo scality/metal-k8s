@@ -144,3 +144,49 @@ export function queryNodeLoadMetrics(
     return resolve;
   });
 }
+
+export function queryThroughputRead(
+  timeSpan: string,
+): Promise<PrometheusQueryResult> {
+  const nodeThroughputReadQuery = `sum(sum(irate(node_disk_read_bytes_total[1m])) by (instance, device) * 0.000001) by(instance)`;
+  const {
+    startingTimeISO,
+    currentTimeISO,
+    sampleFrequency,
+  } = getMetricsTimeValues(timeSpan);
+
+  return queryPrometheusRange(
+    startingTimeISO,
+    currentTimeISO,
+    sampleFrequency,
+    nodeThroughputReadQuery,
+  ).then((resolve) => {
+    if (resolve.error) {
+      throw resolve.error;
+    }
+    return resolve;
+  });
+}
+
+export function queryThroughputWrite(
+  timeSpan: string,
+): Promise<PrometheusQueryResult> {
+  const nodeThroughputWriteQuery = `sum(sum(irate(node_disk_written_bytes_total[1m])) by (instance, device) * 0.000001)by(instance)`;
+  const {
+    startingTimeISO,
+    currentTimeISO,
+    sampleFrequency,
+  } = getMetricsTimeValues(timeSpan);
+
+  return queryPrometheusRange(
+    startingTimeISO,
+    currentTimeISO,
+    sampleFrequency,
+    nodeThroughputWriteQuery,
+  ).then((resolve) => {
+    if (resolve.error) {
+      throw resolve.error;
+    }
+    return resolve;
+  });
+}
