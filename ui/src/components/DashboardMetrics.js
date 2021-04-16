@@ -28,6 +28,7 @@ import {
 import {
   GraphTitle,
   GraphWrapper as GraphWrapperCommon,
+  PageSubtitle,
 } from '../components/style/CommonLayoutStyle';
 import { useDynamicChartSize } from '../services/utils';
 import { zIndex } from '@scality/core-ui/dist/style/theme';
@@ -53,6 +54,11 @@ const Loader = styled(CoreUILoader)`
   ${(props) => `top: ${props.topPosition || '0'}px;`}
   left: 30px;
   z-index: ${zIndex.overlay};
+`;
+
+const PanelActions = styled.div`
+  display: flex;
+  justify-content: space-between;
 `;
 
 // import styled from 'styled-components';
@@ -307,18 +313,21 @@ const DashboardMetrics = () => {
 
   return (
     <div id="dashboard-metrics-container">
-      {configQuery.isSuccess && configQuery.data.url_grafana && (
-        <Button
-          text={intl.translate('advanced_metrics')}
-          variant={'base'}
-          icon={<i className="fas fa-external-link-alt" />}
-          size={'small'}
-          href={`${configQuery.data.url_grafana}/dashboard/db/nodes-detailed`}
-          target="_blank"
-          rel="noopener noreferrer"
-          data-cy="advanced_metrics_node_detailed"
-        />
-      )}
+      <PanelActions>
+        <PageSubtitle>{intl.translate('metrics')}</PageSubtitle>
+        {configQuery.isSuccess && configQuery.data.url_grafana && (
+          <Button
+            text={intl.translate('advanced_metrics')}
+            variant={'base'}
+            icon={<i className="fas fa-external-link-alt" />}
+            size={'small'}
+            href={`${configQuery.data.url_grafana}/dashboard/db/nodes-detailed`}
+            target="_blank"
+            rel="noopener noreferrer"
+            data-cy="advanced_metrics_node_detailed"
+          />
+        )}
+      </PanelActions>
 
       <GraphWrapper>
         <GraphTitle>

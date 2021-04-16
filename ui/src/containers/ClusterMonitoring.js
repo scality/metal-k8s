@@ -25,6 +25,7 @@ import {
 import { STATUS_CRITICAL, STATUS_SUCCESS } from '../constants';
 import { sortSelector } from '../services/utils';
 import NoRowsRenderer from '../components/NoRowsRenderer';
+import { PageSubtitle } from '../components/style/CommonLayoutStyle';
 import { intl } from '../translations/IntlGlobalProvider';
 const VOLUME_PROVISION_DOC_REFERENCE =
   'MetalK8s Quickstart Guide > Deployment of the Bootstrap node > Installation > Provision storage for Prometheus services';
@@ -48,13 +49,6 @@ const TableContainer = styled.div`
   .sc-table-column-cell-container-severity {
     justify-content: center;
   }
-`;
-
-const PageSubtitle = styled.h3`
-  color: ${(props) => props.theme.brand.textPrimary};
-  margin: ${padding.small} 0;
-  display: flex;
-  align-items: center;
 `;
 
 const ClusterStatusTitleContainer = styled.div`
