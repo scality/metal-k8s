@@ -286,7 +286,7 @@ const DashboardMetrics = () => {
           queryThroughputRead(metricsTimeSpan),
           queryThroughputWrite(metricsTimeSpan),
         ]).then((result) => formatNodesThroughputPromRangeForChart(result)),
-      [nodes, metricsTimeSpan, formatNodesPromRangeForChart],
+      [metricsTimeSpan, formatNodesThroughputPromRangeForChart],
     ),
   );
 
