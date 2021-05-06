@@ -9,6 +9,9 @@
 - Bump CoreDNS version to 1.8.0
   (PR[#3354](https://github.com/scality/metalk8s/pull/3354))
 
+- Use `systemd` cgroupDriver for Kubelet
+  (PR[#XX](https://github.com/scality/metalk8s/pull/XX))
+
 ### Breaking changes
 
 - [#2199](https://github.com/scality/metalk8s/issues/2199) - Prometheus label
