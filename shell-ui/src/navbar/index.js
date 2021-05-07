@@ -124,7 +124,7 @@ const SolutionsNavbar = ({
     default:
       return <LoadingNavbar logo={logos.dark || `/brand/assets/logo-dark.svg`} />;
     case 'error':
-      return ReactDOM.render(<ErrorPage500 data-cy='sc-error-page500'/>, document.body);
+      return <ErrorPage500 data-cy="sc-error-page500" />;
     case 'success': {
       const userManager = new UserManager({
         authority: oidcProviderUrl || config.oidc?.providerUrl,
