@@ -82,9 +82,6 @@ prometheusOperator:
   image:
     repository: '__image__(prometheus-operator)'
 
-  configmapReloadImage:
-    repository: '__image__(configmap-reload)'
-
   prometheusConfigReloaderImage:
     repository: '__image__(prometheus-config-reloader)'
 
@@ -146,12 +143,6 @@ grafana:
 
   image:
     repository: '__image__(grafana)'
-    # NOTE: We do not use the image version in the helm chart as currently
-    # helm chart use version 7.2.1 and this version have the following bug
-    # https://github.com/grafana/grafana/issues/28621 which get fixed in
-    # 7.3.1
-    # Set the version to 7.3.5
-    tag: 7.3.5
 
   sidecar:
     image:
@@ -181,11 +172,11 @@ grafana:
       nginx.ingress.kubernetes.io/rewrite-target: /$2
     path: /grafana(/|$)(.*)
     hosts:
-      - null
+      - 'null'
 
   grafana.ini:
     server:
-      root_url: '__escape__(https://{{ grains.metalk8s.control_plane_ip }}:8443/grafana)'
+      root_url: '__escape__(https://{{ "{{ grains.metalk8s.control_plane_ip }}" }}:8443/grafana)'
     analytics:
       reporting_enabled: false
       check_for_updates: false
@@ -197,11 +188,11 @@ grafana:
       scopes: "openid profile email groups"
       client_id: "grafana-ui"
       client_secret: "4lqK98NcsWG5qBRHJUqYM1"
-      auth_url: '__escape__(https://{{ grains.metalk8s.control_plane_ip }}:8443/oidc/auth)'
-      token_url:  '__escape__(https://{{ grains.metalk8s.control_plane_ip }}:8443/oidc/token)'
-      api_url: '__escape__(https://{{ grains.metalk8s.control_plane_ip }}:8443/oidc/userinfo)'
+      auth_url: '__escape__(https://{{ "{{ grains.metalk8s.control_plane_ip }}" }}:8443/oidc/auth)'
+      token_url:  '__escape__(https://{{ "{{ grains.metalk8s.control_plane_ip }}" }}:8443/oidc/token)'
+      api_url: '__escape__(https://{{ "{{ grains.metalk8s.control_plane_ip }}" }}:8443/oidc/userinfo)'
       role_attribute_path: >-
-        contains(`{% endraw %}{{ dex.spec.config.staticPasswords | map(attribute='email') | list | tojson }}{% raw %}`, email) && 'Admin'
+        contains(`{% endraw %}{{ "{{ dex.spec.config.staticPasswords | map(attribute='email') | list | tojson }}" }}{% raw %}`, email) && 'Admin'
 
   testFramework:
     enabled: false
